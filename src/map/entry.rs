@@ -15,3 +15,12 @@ impl<K, V> Entry<K, V> {
         Entry { key, value }
     }
 }
+
+impl<K: Clone, V: Clone> Clone for Entry<K, V> {
+    fn clone(&self) -> Self {
+        Self {
+            key: self.key.clone(),
+            value: self.value.clone()
+        }
+    }
+}

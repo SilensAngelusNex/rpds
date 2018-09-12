@@ -10,6 +10,7 @@ use std::fmt::Display;
 use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
 use std::ops::Index;
+use std::ops::IndexMut;
 use std::sync::Arc;
 
 // TODO Use impl trait instead of this when available.
@@ -779,6 +780,28 @@ where
     }
 }
 
+impl<K, V> Node<K, V>
+where
+    K: Ord + Clone,
+    V: Clone
+{
+    /// If you modify the returned entry's key it will (probably) break your map by
+    /// messing up the keys' ordering. It can't break any other maps, but any new
+    /// maps created from the broken map will also be broken. Hopefully the fact that
+    /// this function isn't public makes that danger acceptable.
+    fn get_mut<Q: ?Sized>(&mut self, key: &Q) -> Option<&mut Entry<K, V>>
+    where
+        K: Borrow<Q>,
+        Q: Ord,
+    {
+        match key.cmp(self.entry.key.borrow()) {
+            Ordering::Less => self.left.as_mut().and_then(|l| Arc::make_mut(l).get_mut(key)),
+            Ordering::Equal => Some(Arc::make_mut(&mut self.entry)),
+            Ordering::Greater => self.right.as_mut().and_then(|r| Arc::make_mut(r).get_mut(key)),
+        }
+    }
+}
+
 impl<K, V> RedBlackTreeMap<K, V>
 where
     K: Ord,
@@ -910,6 +933,23 @@ where
     }
 }
 
+impl<K: Clone, V: Clone> RedBlackTreeMap<K, V>
+where
+    K: Ord,
+{
+    #[must_use]
+    pub fn get_mut<Q: ?Sized>(&mut self, key: &Q) -> Option<&mut V>
+    where
+        K: Borrow<Q>,
+        Q: Ord,
+    {
+        self.root
+            .as_mut()
+            .and_then(|r| Arc::make_mut(r).get_mut(key))
+            .map(|e| &mut e.value)
+    }
+}
+
 impl<'a, K, Q: ?Sized, V> Index<&'a Q> for RedBlackTreeMap<K, V>
 where
     K: Ord + Borrow<Q>,
@@ -919,6 +959,17 @@ where
 
     fn index(&self, key: &Q) -> &V {
         self.get(key).expect("no entry found for key")
+    }
+}
+
+impl<'a, K: Clone, Q: ?Sized, V: Clone> IndexMut<&'a Q> for RedBlackTreeMap<K, V>
+where
+    K: Ord + Borrow<Q> + Clone,
+    Q: Ord,
+    Q: Clone
+{
+    fn index_mut(&mut self, key: &Q) -> &mut V {
+        self.get_mut(key).expect("no entry found for key")
     }
 }
 
