@@ -783,7 +783,7 @@ where
 impl<K, V> Node<K, V>
 where
     K: Ord + Clone,
-    V: Clone
+    V: Clone,
 {
     /// If you modify the returned entry's key it will (probably) break your map by
     /// messing up the keys' ordering. It can't break any other maps, but any new
@@ -795,9 +795,15 @@ where
         Q: Ord,
     {
         match key.cmp(self.entry.key.borrow()) {
-            Ordering::Less => self.left.as_mut().and_then(|l| Arc::make_mut(l).get_mut(key)),
+            Ordering::Less => self
+                .left
+                .as_mut()
+                .and_then(|l| Arc::make_mut(l).get_mut(key)),
             Ordering::Equal => Some(Arc::make_mut(&mut self.entry)),
-            Ordering::Greater => self.right.as_mut().and_then(|r| Arc::make_mut(r).get_mut(key)),
+            Ordering::Greater => self
+                .right
+                .as_mut()
+                .and_then(|r| Arc::make_mut(r).get_mut(key)),
         }
     }
 }
@@ -966,7 +972,7 @@ impl<'a, K: Clone, Q: ?Sized, V: Clone> IndexMut<&'a Q> for RedBlackTreeMap<K, V
 where
     K: Ord + Borrow<Q> + Clone,
     Q: Ord,
-    Q: Clone
+    Q: Clone,
 {
     fn index_mut(&mut self, key: &Q) -> &mut V {
         self.get_mut(key).expect("no entry found for key")

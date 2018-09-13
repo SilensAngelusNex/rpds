@@ -19,8 +19,8 @@ impl<K, V> Entry<K, V> {
 impl<K: Clone, V: Clone> Clone for Entry<K, V> {
     fn clone(&self) -> Self {
         Self {
-            key: self.key.clone(),
-            value: self.value.clone()
+            key:   self.key.clone(),
+            value: self.value.clone(),
         }
     }
 }
